@@ -1,5 +1,6 @@
 package com.okpos.todaysales.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -14,22 +15,28 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "대시보드 응답 데이터")
 public class DashboardResponse {
     
+    @Schema(description = "조회 날짜", example = "2024-01-15")
     @NotNull(message = "날짜는 필수입니다")
     private LocalDate date;
     
+    @Schema(description = "일일 총 매출", example = "75000")
     @NotNull(message = "총 매출은 필수입니다")
     @PositiveOrZero(message = "총 매출은 0 이상이어야 합니다")
     private BigDecimal totalAmount;
     
+    @Schema(description = "일일 총 거래건수", example = "5")
     @NotNull(message = "총 거래건수는 필수입니다")
     @PositiveOrZero(message = "총 거래건수는 0 이상이어야 합니다")
     private Integer totalCount;
     
+    @Schema(description = "결제수단별 통계")
     @Valid
     private List<PaymentTypeStatistic> paymentTypeStatistics;
     
+    @Schema(description = "시간대별 통계")
     @Valid
     private List<HourlyStatistic> hourlyStatistics;
     
