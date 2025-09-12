@@ -61,4 +61,92 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
            "AND DATE(s.transactionTime) = :date")
     Long countByStoreIdAndDate(@Param("storeId") Long storeId, 
                                @Param("date") LocalDate date);
+    
+    @Query("SELECT COALESCE(SUM(s.amount), 0) FROM Sale s " +
+           "WHERE s.store.businessNumber = :businessNumber " +
+           "AND DATE(s.transactionTime) = :date " +
+           "AND s.status = 'COMPLETED'")
+    BigDecimal findTotalAmountByBusinessNumberAndDate(@Param("businessNumber") String businessNumber,
+                                                    @Param("date") LocalDate date);
+    
+    @Query("SELECT COUNT(s) FROM Sale s " +
+           "WHERE s.store.businessNumber = :businessNumber " +
+           "AND DATE(s.transactionTime) = :date " +
+           "AND s.status = 'COMPLETED'")
+    Long countByBusinessNumberAndDate(@Param("businessNumber") String businessNumber,
+                                    @Param("date") LocalDate date);
+    
+    @Query("SELECT s.paymentType as paymentType, " +
+           "COALESCE(SUM(s.amount), 0) as amount, " +
+           "COUNT(s) as count, " +
+           "COALESCE(SUM(s.fee), 0) as fee, " +
+           "COALESCE(SUM(s.netAmount), 0) as netAmount " +
+           "FROM Sale s " +
+           "WHERE s.store.businessNumber = :businessNumber " +
+           "AND DATE(s.transactionTime) = :date " +
+           "AND s.status = 'COMPLETED' " +
+           "GROUP BY s.paymentType")
+    List<Object[]> findPaymentTypeStatisticsByBusinessNumberAndDate(@Param("businessNumber") String businessNumber,
+                                                                  @Param("date") LocalDate date);
+    
+    @Query("SELECT HOUR(s.transactionTime) as hour, " +
+           "COALESCE(SUM(s.amount), 0) as amount, " +
+           "COUNT(s) as count " +
+           "FROM Sale s " +
+           "WHERE s.store.businessNumber = :businessNumber " +
+           "AND DATE(s.transactionTime) = :date " +
+           "AND s.status = 'COMPLETED' " +
+           "GROUP BY HOUR(s.transactionTime) " +
+           "ORDER BY hour ")
+    List<Object[]> findHourlyStatisticsByBusinessNumberAndDate(@Param("businessNumber") String businessNumber,
+                                                             @Param("date") LocalDate date);
+    
+    @Query("SELECT s FROM Sale s " +
+           "WHERE s.store.businessNumber = :businessNumber " +
+           "AND s.transactionTime BETWEEN :startDate AND :endDate " +
+           "ORDER BY s.transactionTime DESC")
+    org.springframework.data.domain.Page<Sale> findByBusinessNumberAndDateRange(
+            @Param("businessNumber") String businessNumber,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            org.springframework.data.domain.Pageable pageable);
+    
+    @Query("SELECT COALESCE(SUM(s.amount), 0), " +
+           "COUNT(s), " +
+           "COALESCE(SUM(s.fee), 0), " +
+           "COALESCE(SUM(s.netAmount), 0) " +
+           "FROM Sale s " +
+           "WHERE s.store.businessNumber = :businessNumber " +
+           "AND s.transactionTime BETWEEN :startDate AND :endDate " +
+           "AND s.status = 'COMPLETED'")
+    Object[] findMonthlyTotalByBusinessNumberAndDateRange(@Param("businessNumber") String businessNumber,
+                                                        @Param("startDate") LocalDateTime startDate,
+                                                        @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT DAY(s.transactionTime) as day, " +
+           "COALESCE(SUM(s.amount), 0) as amount, " +
+           "COUNT(s) as count " +
+           "FROM Sale s " +
+           "WHERE s.store.businessNumber = :businessNumber " +
+           "AND s.transactionTime BETWEEN :startDate AND :endDate " +
+           "AND s.status = 'COMPLETED' " +
+           "GROUP BY DAY(s.transactionTime) " +
+           "ORDER BY day")
+    List<Object[]> findDailyStatisticsByBusinessNumberAndDateRange(@Param("businessNumber") String businessNumber,
+                                                                 @Param("startDate") LocalDateTime startDate,
+                                                                 @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT s.paymentType as paymentType, " +
+           "COALESCE(SUM(s.amount), 0) as amount, " +
+           "COUNT(s) as count, " +
+           "COALESCE(SUM(s.fee), 0) as fee, " +
+           "COALESCE(SUM(s.netAmount), 0) as netAmount " +
+           "FROM Sale s " +
+           "WHERE s.store.businessNumber = :businessNumber " +
+           "AND s.transactionTime BETWEEN :startDate AND :endDate " +
+           "AND s.status = 'COMPLETED' " +
+           "GROUP BY s.paymentType")
+    List<Object[]> findMonthlyPaymentTypeStatisticsByBusinessNumberAndDateRange(@Param("businessNumber") String businessNumber,
+                                                                              @Param("startDate") LocalDateTime startDate,
+                                                                              @Param("endDate") LocalDateTime endDate);
 }
