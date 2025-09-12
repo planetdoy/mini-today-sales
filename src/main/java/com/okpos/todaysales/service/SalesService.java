@@ -13,6 +13,8 @@ import com.okpos.todaysales.entity.enums.SaleStatus;
 import com.okpos.todaysales.repository.SaleRepository;
 import com.okpos.todaysales.repository.StoreRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,7 @@ public class SalesService {
     private static final BigDecimal CASH_FEE_RATE = BigDecimal.ZERO; // 0%
     
     @Transactional
+    @CacheEvict(value = "dashboard", key = "#request.businessNumber + '_' + T(java.time.LocalDate).now()")
     public SaleResponse createSale(SaleRequest request) {
         // 중복 주문번호 검증
         if (saleRepository.findByOrderNumber(request.getOrderNumber()).isPresent()) {
@@ -83,6 +86,7 @@ public class SalesService {
         return convertToSaleResponse(savedSale);
     }
     
+    @Cacheable(value = "dashboard", key = "#businessNumber + '_' + #date")
     public SaleDashboard getDashboard(String businessNumber, LocalDate date) {
         // 가맹점 존재 여부 검증
         Store store = storeRepository.findByBusinessNumber(businessNumber)
