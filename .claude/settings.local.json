@@ -5,7 +5,10 @@
       "Bash(do sed -i 's/package com.example.minisales.entity.enums;/package com.okpos.todaysales.entity.enums;/' \"$file\")",
       "Bash(done)",
       "Bash(powershell:*)",
-      "Bash(mvn clean:*)"
+      "Bash(mvn clean:*)",
+      "Bash(mvn:*)",
+      "Bash(timeout:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

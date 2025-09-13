@@ -102,7 +102,7 @@ public class SaleRepositoryTest {
                 .transactionTime(today.minusHours(2))
                 .amount(new BigDecimal("8000"))
                 .paymentType(PaymentType.MOBILE_PAY)
-                .channel(SaleChannel.MOBILE)
+                .channel(SaleChannel.MOBILE_APP)
                 .orderNumber("ORD-004")
                 .fee(new BigDecimal("160"))
                 .netAmount(new BigDecimal("7840"))

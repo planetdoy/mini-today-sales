@@ -55,7 +55,7 @@ public class StoreRepositoryTest {
                 .ownerName("이민수")
                 .phoneNumber("02-5555-4444")
                 .address("서울시 종로구 세종로 789")
-                .category(StoreCategory.CONVENIENCE)
+                .category(StoreCategory.CONVENIENCE_STORE)
                 .status(StoreStatus.INACTIVE)
                 .build();
 

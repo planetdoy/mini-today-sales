@@ -4,6 +4,7 @@ import com.okpos.todaysales.dto.MonthlyReportResponse;
 import com.okpos.todaysales.dto.SaleDashboard;
 import com.okpos.todaysales.dto.SaleRequest;
 import com.okpos.todaysales.dto.SaleResponse;
+import com.okpos.todaysales.event.EventPublisher;
 import com.okpos.todaysales.exception.InvalidRequestException;
 import com.okpos.todaysales.exception.StoreNotFoundException;
 import com.okpos.todaysales.entity.Sale;
@@ -35,6 +36,7 @@ public class SalesService {
     
     private final SaleRepository saleRepository;
     private final StoreRepository storeRepository;
+    private final EventPublisher eventPublisher;
     
     private static final BigDecimal CARD_FEE_RATE = new BigDecimal("0.025"); // 2.5%
     private static final BigDecimal CASH_FEE_RATE = BigDecimal.ZERO; // 0%
@@ -82,6 +84,13 @@ public class SalesService {
                 .build();
         
         Sale savedSale = saleRepository.save(sale);
+        
+        try {
+            eventPublisher.publishSaleCreated(savedSale);
+        } catch (Exception e) {
+            // 이벤트 발행 실패는 비즈니스 로직에 영향을 주지 않도록 로그만 남김
+            throw e; // 하지만 트랜잭션 롤백을 위해 다시 던짐
+        }
         
         return convertToSaleResponse(savedSale);
     }
