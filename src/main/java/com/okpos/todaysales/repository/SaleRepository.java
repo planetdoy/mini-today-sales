@@ -40,14 +40,18 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
            "AND s.status = 'COMPLETED'")
     BigDecimal findTotalAmountByDate(@Param("date") LocalDate date);
     
-    @Query("SELECT s FROM Sale s WHERE s.id NOT IN " +
-           "(SELECT DISTINCT sale.id FROM Settlement settlement " +
-           "JOIN settlement.store.sales sale " +
-           "WHERE settlement.settlementDate = DATE(sale.transactionTime) " +
-           "AND settlement.store = sale.store) " +
+    @Query("SELECT s FROM Sale s WHERE s.isSettled = false " +
            "AND s.status = 'COMPLETED' " +
+           "AND DATE(s.transactionTime) = :date " +
            "ORDER BY s.transactionTime DESC")
-    List<Sale> findUnsettledSales();
+    List<Sale> findUnsettledSalesByDate(@Param("date") LocalDate date);
+
+    @Query("SELECT s FROM Sale s WHERE s.isSettled = false " +
+           "AND s.status = 'COMPLETED' " +
+           "AND s.transactionTime BETWEEN :startDate AND :endDate " +
+           "ORDER BY s.transactionTime DESC")
+    List<Sale> findUnsettledSalesByDateRange(@Param("startDate") LocalDateTime startDate,
+                                              @Param("endDate") LocalDateTime endDate);
     
     @Query("SELECT COALESCE(SUM(s.amount), 0) FROM Sale s " +
            "WHERE s.store.id = :storeId " +

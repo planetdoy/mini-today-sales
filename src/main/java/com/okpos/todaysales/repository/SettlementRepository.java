@@ -15,28 +15,22 @@ import java.util.Optional;
 @Repository
 public interface SettlementRepository extends JpaRepository<Settlement, Long> {
     
-    List<Settlement> findByStoreId(Long storeId);
-    
     List<Settlement> findByStatus(SettlementStatus status);
+
+    Optional<Settlement> findBySettlementDate(LocalDate settlementDate);
+
+    boolean existsBySettlementDate(LocalDate settlementDate);
     
-    List<Settlement> findBySettlementDate(LocalDate settlementDate);
-    
-    Optional<Settlement> findByStoreIdAndSettlementDate(Long storeId, LocalDate settlementDate);
-    
-    @Query("SELECT s FROM Settlement s WHERE s.store.id = :storeId " +
-           "AND s.settlementDate BETWEEN :startDate AND :endDate " +
+    @Query("SELECT s FROM Settlement s WHERE s.settlementDate BETWEEN :startDate AND :endDate " +
            "ORDER BY s.settlementDate DESC")
-    List<Settlement> findByStoreIdAndDateRange(@Param("storeId") Long storeId,
-                                             @Param("startDate") LocalDate startDate,
-                                             @Param("endDate") LocalDate endDate);
-    
-    @Query("SELECT COALESCE(SUM(s.settlementAmount), 0) FROM Settlement s " +
-           "WHERE s.store.id = :storeId " +
-           "AND s.settlementDate BETWEEN :startDate AND :endDate " +
+    List<Settlement> findByDateRange(@Param("startDate") LocalDate startDate,
+                                      @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT COALESCE(SUM(s.netAmount), 0) FROM Settlement s " +
+           "WHERE s.settlementDate BETWEEN :startDate AND :endDate " +
            "AND s.status = 'COMPLETED'")
-    BigDecimal findTotalSettlementAmountByStoreAndDateRange(@Param("storeId") Long storeId,
-                                                          @Param("startDate") LocalDate startDate,
-                                                          @Param("endDate") LocalDate endDate);
+    BigDecimal findTotalSettlementAmountByDateRange(@Param("startDate") LocalDate startDate,
+                                                     @Param("endDate") LocalDate endDate);
     
     @Query("SELECT s FROM Settlement s WHERE s.status = 'PENDING' " +
            "AND s.settlementDate <= :date " +

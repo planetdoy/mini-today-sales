@@ -60,7 +60,15 @@ public class Sale {
     @Column(nullable = false, length = 20)
     @Builder.Default
     private SaleStatus status = SaleStatus.COMPLETED;
-    
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "settlement_id")
+    private Settlement settlement;
+
+    @Column(name = "is_settled")
+    @Builder.Default
+    private Boolean isSettled = false;
+
     @PrePersist
     @PreUpdate
     public void calculateNetAmount() {

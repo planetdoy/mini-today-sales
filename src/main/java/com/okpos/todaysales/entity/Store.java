@@ -18,7 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(exclude = {"sales", "settlements"})
+@ToString(exclude = "sales")
 @EqualsAndHashCode(of = "id")
 public class Store {
     
@@ -61,8 +61,4 @@ public class Store {
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Sale> sales = new ArrayList<>();
-    
-    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Settlement> settlements = new ArrayList<>();
 }
