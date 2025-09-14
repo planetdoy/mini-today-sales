@@ -29,6 +29,7 @@ public class SettlementBatchService {
     private final SettlementRepository settlementRepository;
     private final RabbitTemplate rabbitTemplate;
     private final SettlementFailureService settlementFailureService;
+    private final MetricsService metricsService;
 
     private static final BigDecimal FEE_RATE = new BigDecimal("0.03"); // 3% 수수료율
     private static final String SETTLEMENT_EXCHANGE = "sales.exchange";
@@ -74,10 +75,20 @@ public class SettlementBatchService {
      * 정산 프로세스 메인 로직
      */
     public Settlement processSettlement(LocalDate settlementDate) {
+        io.micrometer.core.instrument.Timer.Sample sample = metricsService.startSettlementTimer();
+
         try {
-            return processSettlementInTransaction(settlementDate);
+            Settlement result = processSettlementInTransaction(settlementDate);
+
+            // 성공 메트릭 기록
+            metricsService.recordSettlementCompleted(sample, result.getTransactionCount(), result.getTotalAmount());
+
+            return result;
         } catch (Exception e) {
             log.error("정산 처리 중 오류 발생: {}", settlementDate, e);
+
+            // 실패 메트릭 기록
+            metricsService.recordSettlementFailed(sample, e.getClass().getSimpleName(), e.getMessage());
 
             // 별도 서비스로 실패 처리
             settlementFailureService.saveFailedSettlement(settlementDate, e.getMessage());

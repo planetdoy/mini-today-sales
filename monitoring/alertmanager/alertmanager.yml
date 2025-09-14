@@ -1,0 +1,99 @@
+global:
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'alerts@company.com'
+  smtp_auth_username: 'alerts@company.com'
+  smtp_auth_password: 'your_app_password'
+
+route:
+  group_by: ['alertname', 'team']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default-receiver'
+  routes:
+    # 심각한 알림은 즉시 PagerDuty로
+    - match:
+        severity: critical
+      receiver: 'pagerduty-critical'
+      group_wait: 0s
+      repeat_interval: 5m
+
+    # 경고는 Slack으로
+    - match:
+        severity: warning
+      receiver: 'slack-warnings'
+      repeat_interval: 30m
+
+    # 정보성 알림은 이메일로
+    - match:
+        severity: info
+      receiver: 'email-info'
+      repeat_interval: 12h
+
+receivers:
+  # 기본 수신자
+  - name: 'default-receiver'
+    slack_configs:
+    - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+      channel: '#alerts'
+      title: 'Mini Today Sales Alert'
+      text: |
+        {{ range .Alerts }}
+        *Alert:* {{ .Annotations.summary }}
+        *Description:* {{ .Annotations.description }}
+        *Severity:* {{ .Labels.severity }}
+        *Team:* {{ .Labels.team }}
+        {{ end }}
+
+  # 심각한 알림 - PagerDuty
+  - name: 'pagerduty-critical'
+    pagerduty_configs:
+    - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+      description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+      details:
+        firing: '{{ template "pagerduty.default.instances" . }}'
+
+  # 경고 알림 - Slack
+  - name: 'slack-warnings'
+    slack_configs:
+    - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+      channel: '#warnings'
+      color: 'warning'
+      title: '⚠️ Warning Alert'
+      text: |
+        {{ range .Alerts }}
+        *Alert:* {{ .Annotations.summary }}
+        *Description:* {{ .Annotations.description }}
+        *Team:* {{ .Labels.team }}
+        {{ if .Annotations.runbook_url }}
+        *Runbook:* {{ .Annotations.runbook_url }}
+        {{ end }}
+        {{ end }}
+
+  # 정보성 알림 - 이메일
+  - name: 'email-info'
+    email_configs:
+    - to: 'team-backend@company.com'
+      subject: 'Mini Today Sales Info: {{ .GroupLabels.alertname }}'
+      body: |
+        {{ range .Alerts }}
+        Alert: {{ .Annotations.summary }}
+        Description: {{ .Annotations.description }}
+        Team: {{ .Labels.team }}
+        Time: {{ .StartsAt }}
+        {{ end }}
+
+inhibit_rules:
+  # 서비스가 다운되면 다른 관련 알림은 억제
+  - source_match:
+      alertname: ServiceDown
+    target_match_re:
+      alertname: (HighResponseTime|DatabaseConnectionFailed|RedisConnectionFailed)
+    equal: ['instance']
+
+  # 데이터베이스 연결 실패 시 관련 알림 억제
+  - source_match:
+      alertname: DatabaseConnectionFailed
+    target_match_re:
+      alertname: (HighSettlementFailureRate|NoSalesDetected)
+    equal: ['instance']

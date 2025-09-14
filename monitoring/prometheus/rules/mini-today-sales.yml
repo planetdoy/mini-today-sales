@@ -1,0 +1,116 @@
+groups:
+  - name: mini-today-sales-critical
+    rules:
+      # 서비스 다운
+      - alert: ServiceDown
+        expr: up{job="mini-today-sales"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Mini Today Sales 서비스 다운"
+          description: "{{ $labels.instance }}에서 서비스가 응답하지 않습니다"
+          runbook_url: "https://wiki.company.com/runbooks/service-down"
+
+      # 정산 실패율 높음
+      - alert: HighSettlementFailureRate
+        expr: rate(settlement_result_total{result="failure"}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          team: finance
+        annotations:
+          summary: "정산 실패율 높음"
+          description: "정산 실패율이 5%를 초과했습니다. 현재 실패율: {{ $value | humanizePercentage }}"
+
+      # 데이터베이스 연결 실패
+      - alert: DatabaseConnectionFailed
+        expr: customDatabase == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "데이터베이스 연결 실패"
+          description: "데이터베이스에 연결할 수 없습니다"
+
+  - name: mini-today-sales-warning
+    rules:
+      # 매출 발생 없음
+      - alert: NoSalesDetected
+        expr: rate(sales_created_total[1h]) == 0
+        for: 10m
+        labels:
+          severity: warning
+          team: business
+        annotations:
+          summary: "매출 발생 없음"
+          description: "지난 1시간 동안 매출이 발생하지 않았습니다"
+
+      # API 응답시간 지연
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "API 응답시간 지연"
+          description: "95% 응답시간이 3초를 초과했습니다. 현재: {{ $value }}초"
+
+      # JVM 메모리 사용률 높음
+      - alert: HighJVMMemoryUsage
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "JVM 힙 메모리 사용률 높음"
+          description: "힙 메모리 사용률이 80%를 초과했습니다. 현재: {{ $value | humanizePercentage }}"
+
+      # Redis 연결 실패
+      - alert: RedisConnectionFailed
+        expr: customRedis == 0
+        for: 1m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "Redis 연결 실패"
+          description: "Redis 캐시 서버에 연결할 수 없습니다"
+
+      # RabbitMQ 연결 실패
+      - alert: RabbitMQConnectionFailed
+        expr: customRabbitMQ == 0
+        for: 1m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "RabbitMQ 연결 실패"
+          description: "RabbitMQ 메시지 브로커에 연결할 수 없습니다"
+
+  - name: mini-today-sales-info
+    rules:
+      # 배치 작업 완료
+      - alert: DailySettlementCompleted
+        expr: increase(settlement_result_total{result="success"}[1h]) > 0
+        labels:
+          severity: info
+          team: finance
+        annotations:
+          summary: "일일 정산 완료"
+          description: "일일 정산이 성공적으로 완료되었습니다"
+
+      # 높은 트래픽 감지
+      - alert: HighTrafficDetected
+        expr: rate(http_server_requests_total[5m]) > 100
+        for: 10m
+        labels:
+          severity: info
+          team: backend
+        annotations:
+          summary: "높은 트래픽 감지"
+          description: "API 호출량이 분당 100건을 초과했습니다. 현재: {{ $value }}/분"

@@ -33,10 +33,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class SalesService {
-    
+
     private final SaleRepository saleRepository;
     private final StoreRepository storeRepository;
     private final EventPublisher eventPublisher;
+    private final MetricsService metricsService;
     
     private static final BigDecimal CARD_FEE_RATE = new BigDecimal("0.025"); // 2.5%
     private static final BigDecimal CASH_FEE_RATE = BigDecimal.ZERO; // 0%
@@ -84,7 +85,14 @@ public class SalesService {
                 .build();
         
         Sale savedSale = saleRepository.save(sale);
-        
+
+        // 메트릭 기록
+        metricsService.recordSaleCreated(
+                savedSale.getAmount(),
+                savedSale.getPaymentType().name(),
+                savedSale.getChannel().name()
+        );
+
         try {
             eventPublisher.publishSaleCreated(savedSale);
         } catch (Exception e) {

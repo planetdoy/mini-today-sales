@@ -64,3 +64,4 @@ application-prod.yml
 ### OS ###
 .DS_Store
 Thumbs.db
+/nul
